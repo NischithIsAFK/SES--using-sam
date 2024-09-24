@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: AWS SAM template to schedule an email using EventBridge and Lambda
+
+Resources:
+  # Define the Lambda Function to send email
+  SendEmailFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./sendEmail
+      Handler: app.handler
+      Runtime: nodejs20.x
+      Timeout: 30
+      Environment:
+        Variables:
+          SES_EMAIL: "nischith.212@gmail.com"
+      Policies:
+        - AmazonSESFullAccess # Full access to SES to send emails
+        - AWSLambdaBasicExecutionRole
+
+  # Define the EventBridge Rule to trigger Lambda at 5 PM every day
+  EmailScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: cron(30 11 * * ? *) # Runs every day at 5 PM UTC
+      Targets:
+        - Arn: !GetAtt SendEmailFunction.Arn
+          Id: SendEmailTrigger
+
+Outputs:
+  SendEmailFunction:
+    Description: Lambda function ARN
+    Value: !GetAtt SendEmailFunction.Arn
